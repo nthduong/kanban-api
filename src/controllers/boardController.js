@@ -1,12 +1,12 @@
 import { StatusCodes } from "http-status-codes";
+import ApiError from "~/utils/ApiError";
 
 const createNew = async (req, res, next) => {
   try {
     res.status(StatusCodes.CREATED).json({ message: "APIs create list boards" });
+    // throw new ApiError(StatusCodes.INTERNAL_SERVER_ERROR, "loi");
   } catch (error) {
-    res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({
-      errors: error.message,
-    });
+    next(error);
   }
 };
 
