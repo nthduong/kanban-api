@@ -12,4 +12,4 @@ Router.route("/")
 
 Router.route("/:id").get(boardController.getDetails);
 
-export const boardRouters = Router;
+export const boardRouter = Router;
