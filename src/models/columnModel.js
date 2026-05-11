@@ -1,5 +1,5 @@
 import Joi from "joi";
-import { ObjectId } from "mongodb";
+import { ObjectId, ReturnDocument } from "mongodb";
 import { GET_DB } from "~/config/mongodb";
 import { OBJECT_ID_RULE, OBJECT_ID_RULE_MESSAGE } from "~/utils/validators";
 
@@ -22,7 +22,12 @@ const validateData = async (data) => {
 const createNew = async (data) => {
   try {
     const validData = await validateData(data);
-    const createColumn = await GET_DB().collection(COLUMN_COLLECTION_NAME).insertOne(validData);
+    const createColumn = await GET_DB()
+      .collection(COLUMN_COLLECTION_NAME)
+      .insertOne({
+        ...validData,
+        boardId: new ObjectId(validData.boardId),
+      });
     return createColumn;
   } catch (error) {
     throw new Error(error);
@@ -42,9 +47,28 @@ const findOneById = async (id) => {
   }
 };
 
+const pushCardOrderIds = async (card) => {
+  try {
+    const result = await GET_DB()
+      .collection(COLUMN_COLLECTION_NAME)
+      .findOneAndUpdate(
+        { _id: new ObjectId(card.columnId) },
+        { $push: { cardOrderIds: new ObjectId(card._id) } },
+        { ReturnDocument: "after" },
+      );
+
+    if (!result) throw new Error("Column not found");
+
+    return result;
+  } catch (error) {
+    throw new Error(error);
+  }
+};
+
 export const columnModel = {
   createNew,
   findOneById,
+  pushCardOrderIds,
   COLUMN_COLLECTION_NAME,
   COLUMN_COLLECTION_SCHEMA,
 };
