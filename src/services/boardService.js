@@ -44,7 +44,7 @@ const update = async (boardId, reqBody) => {
   try {
     const updateData = {
       ...reqBody,
-      updateAt: Date.now(),
+      updatedAt: Date.now(),
     };
     const updateBoard = await boardModel.update(boardId, updateData);
 
