@@ -18,9 +18,15 @@ const START_SERVER = () => {
 
   app.use(errorHandlingMiddleware);
 
-  app.listen(env.APP_PORT, env.APP_HOST, () => {
-    console.log(`I am running at ${env.APP_HOST}:${env.APP_PORT}/`);
-  });
+  if (env.BUILD_MODE === "prod") {
+    app.listen(process.env.PORT, () => {
+      console.log(`Production: Backend server is running successfully at Port ${env.APP_PORT}/`);
+    });
+  } else {
+    app.listen(env.LOCAL_DEV_APP_PORT, env.LOCAL_DEV_APP_HOST, () => {
+      console.log(`Local DEV: Backend server is running successfully at ${env.LOCAL_DEV_APP_HOST}:${env.LOCAL_DEV_APP_PORT}/`);
+    });
+  }
 };
 
 (async () => {
