@@ -5,6 +5,8 @@ import bcrypt from "bcryptjs";
 import { userModel } from "~/models/userModel";
 import { pickUser } from "~/utils/formatters";
 import ApiError from "~/utils/ApiError";
+import { WEBSITE_DOMAINS } from "~/utils/constants";
+import { BrevoProvider } from "~/providers/BrevoProvider";
 
 const createNew = async (reqBody) => {
   try {
@@ -28,6 +30,15 @@ const createNew = async (reqBody) => {
 
     const createUser = await userModel.createNew(newUser);
     const getNewUser = await userModel.findOneById(createUser.insertedId);
+
+    const verificationLink = `${WEBSITE_DOMAINS}/account/verification?email=${getNewUser.email}&token=${getNewUser.verifyToken}`;
+    const customSubject = "Kanban Flow: please verify your email before using our services!";
+    const htmlContent = `
+    <h3>Here is your verification link:</h3>
+    <h3>${verificationLink}</h3>
+    `;
+
+    await BrevoProvider.sendEmail(getNewUser.email, customSubject, htmlContent);
 
     return pickUser(getNewUser);
   } catch (error) {
