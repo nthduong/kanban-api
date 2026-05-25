@@ -61,7 +61,7 @@ const verifyAccount = async (reqBody) => {
       verifyToken: null,
     };
 
-    const updateUser = await userModel.update(updateData);
+    const updateUser = await userModel.update(exitsUser._id, updateData);
 
     return pickUser(updateUser);
   } catch (error) {
@@ -75,18 +75,19 @@ const login = async (reqBody) => {
 
     if (!exitsUser) throw new ApiError(StatusCodes.NOT_FOUND, "Account not found!");
     if (!exitsUser.isActive) throw new ApiError(StatusCodes.NOT_ACCEPTABLE, "Your account is not active!");
-    if (!bcrypt.compare(reqBody.password, exitsUser.password)) {
+    if (!(await bcrypt.compare(reqBody.password, exitsUser.password))) {
       throw new ApiError(StatusCodes.NOT_ACCEPTABLE, "Your Email or Password is incorrect!");
     }
 
     const userInfo = { _id: exitsUser._id, email: exitsUser.email };
 
-    const accessToken = JwtProvider.generateToken(
+    const accessToken = await JwtProvider.generateToken(
       userInfo,
       env.ACCESS_TOKEN_SECRET_SIGNATURE,
-      env.ACCESS_TOKEN_LEFT);
+      env.ACCESS_TOKEN_LEFT
+    );
 
-    const refreshToken = JwtProvider.generateToken(
+    const refreshToken = await JwtProvider.generateToken(
       userInfo,
       env.REFRESH_TOKEN_SECRET_SIGNATURE,
       env.REFRESH_TOKEN_LEFT,
