@@ -1,6 +1,6 @@
 import { StatusCodes } from "http-status-codes";
 import { v4 as uuidv4 } from "uuid";
-import bcrypt from "bcryptjs";
+import bcryptjs from "bcryptjs";
 
 import { userModel } from "~/models/userModel";
 import { pickUser } from "~/utils/formatters";
@@ -22,7 +22,7 @@ const createNew = async (reqBody) => {
 
     const newUser = {
       email: reqBody.email,
-      password: bcrypt.hashSync(reqBody.password, 10),
+      password: bcryptjs.hashSync(reqBody.password, 10),
 
       username: nameFromEmail,
       displayName: nameFromEmail,
@@ -75,7 +75,7 @@ const login = async (reqBody) => {
 
     if (!exitsUser) throw new ApiError(StatusCodes.NOT_FOUND, "Account not found!");
     if (!exitsUser.isActive) throw new ApiError(StatusCodes.NOT_ACCEPTABLE, "Your account is not active!");
-    if (!(await bcrypt.compare(reqBody.password, exitsUser.password))) {
+    if (!bcryptjs.compareSync(reqBody.password, exitsUser.password)) {
       throw new ApiError(StatusCodes.NOT_ACCEPTABLE, "Your Email or Password is incorrect!");
     }
 
@@ -120,9 +120,37 @@ const refreshToken = async (clientRefreshToken) => {
   }
 };
 
+const update = async (userId, reqBody) => {
+  try {
+    const exitsUser = await userModel.findOneById(userId);
+
+    if (!exitsUser) throw new ApiError(StatusCodes.NOT_FOUND, "Account not found!");
+    if (!exitsUser.isActive) throw new ApiError(StatusCodes.NOT_ACCEPTABLE, "Your account is not active!");
+
+    let updatedUser = {};
+
+    if (reqBody.current_password && reqBody.new_password) {
+      if (!bcryptjs.compareSync(reqBody.current_password, exitsUser.password)) {
+        throw new ApiError(StatusCodes.NOT_ACCEPTABLE, "Your Current Password is incorrect!");
+      }
+
+      updatedUser = await userModel.update(exitsUser._id, {
+        password: bcryptjs.hashSync(reqBody.new_password, 10),
+      });
+    } else {
+      updatedUser = await userModel.update(exitsUser._id, reqBody);
+    }
+
+    return pickUser(updatedUser);
+  } catch (error) {
+    throw error;
+  }
+};
+
 export const userService = {
   createNew,
   verifyAccount,
   login,
   refreshToken,
+  update,
 };
