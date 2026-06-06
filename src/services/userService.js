@@ -9,6 +9,7 @@ import { WEBSITE_DOMAINS } from "~/utils/constants";
 import { BrevoProvider } from "~/providers/BrevoProvider";
 import { JwtProvider } from "~/providers/JwtProvider";
 import { env } from "~/config/environment";
+import { CloudinaryProvider } from "~/providers/CloudinaryProvider";
 
 const createNew = async (reqBody) => {
   try {
@@ -120,7 +121,7 @@ const refreshToken = async (clientRefreshToken) => {
   }
 };
 
-const update = async (userId, reqBody) => {
+const update = async (userId, reqBody, userAvatarFile) => {
   try {
     const exitsUser = await userModel.findOneById(userId);
 
@@ -136,6 +137,11 @@ const update = async (userId, reqBody) => {
 
       updatedUser = await userModel.update(exitsUser._id, {
         password: bcryptjs.hashSync(reqBody.new_password, 10),
+      });
+    } else if (userAvatarFile) {
+      const uploadResult = await CloudinaryProvider.streamUpload(userAvatarFile.buffer, "users");
+      updatedUser = await userModel.update(exitsUser._id, {
+        avatar: uploadResult.secure_url,
       });
     } else {
       updatedUser = await userModel.update(exitsUser._id, reqBody);
