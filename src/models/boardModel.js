@@ -156,12 +156,25 @@ const pullColumnOrderIds = async (column) => {
   }
 };
 
-const getBoards = async (userId, page, itemsPerPage) => {
+const getBoards = async (userId, page, itemsPerPage, queryFilters) => {
   try {
     const queryConditions = [
       { _destroy: false },
       { $or: [{ ownerIds: { $all: [new ObjectId(userId)] } }, { memberIds: { $all: [new ObjectId(userId)] } }] },
     ];
+    if (queryFilters) {
+      Object.keys(queryFilters).forEach((key) => {
+        // Có phân biệt chữ hoa chữ thường
+        // queryConditions.push({
+        //   [key]: { $regex: queryFilters[key] },
+        // });
+
+        // Ko phân biệt chữ hoa chữ thường
+        queryConditions.push({
+          [key]: { $regex: new RegExp(queryFilters[key], "i") },
+        });
+      });
+    }
 
     const query = await GET_DB()
       .collection(BOARD_COLLECTION_NAME)
